@@ -1,0 +1,31 @@
+version: '3.5'
+
+services:
+  pg_data: # A string that specifies a custom container name, rather than a generated default name
+    image: postgres:13  
+    environment:       
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:            
+      - ./demo_data:/var/lib/postgresql/data
+    ports:             
+      - "5432:5432"
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4 
+    environment:         
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    volumes:           
+      - ./pgadmin_data:/var/lib/pgadmin
+    ports:              
+      - "8080:80"
+    restart: always
+    depends_on:       
+      - pg_data
+
+volumes:
+  demo_data:
+  pgadmin_data:

@@ -1,0 +1,21 @@
+docker network create pg_net
+
+docker run -d \
+  -e  PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+  -e  PGADMIN_DEFAULT_PASSWORD="password" \
+  -p  8080:80 \
+  --network=pg_net \
+  --name=pg_admin \
+  dpage/pgadmin4
+ 
+
+docker run -it \
+  -e  POSTGRES_USER="admin"  \
+  -e  POSTGRES_PASSWORD="password" \
+  -e  POSTGRES_DB="demo_db" \
+  -v  //c/Users/Usman/Desktop/postgres_docker/demo_data:/var/lib/postgresql/data \
+  -p  5431:5432 \
+  --restart=always \
+  --network=pg_net \
+  --name=pg_data \
+  postgres:13
