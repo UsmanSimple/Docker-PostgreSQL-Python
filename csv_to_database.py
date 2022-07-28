@@ -1,7 +1,9 @@
+from email import header
 import pandas as pd
 import psycopg2
 import os
 import sys
+from io import StringIO
 
 parameters_dict= {
 'user':'admin',
@@ -125,10 +127,11 @@ def connect(parameter):
     return conn
 
 
-def copy_from_csv(conn, df, table_name, col_to_str):
+def copy_from_disk(conn, df, table_name, col_to_str):
 
     """
-    This copy the CSV file into the database
+    This takes the preprocessed dataframe, save it to the disk in csv format
+    and implement copy_from module to copy it to postgres table
 
     Parameters
     -----------
@@ -175,13 +178,71 @@ def copy_from_csv(conn, df, table_name, col_to_str):
 
             conn.rollback()
     print(f'The table {table_name} has been successful be loaded with data')
+    print('The file has been successful copied with copy_from_disk() function')
+    conn.close()
+
+    return 
+
+
+def copy_from_stringio(conn, df, table_name, col_to_str):
+
+    """
+    This takes the preprocessed dataframe, save it in memory in csv format
+    and use copy_from module to copy it to postgres table
+
+    Parameters
+    -----------
+    conn :      connection obj  
+                connection object if successfully connected
+
+    df :        dataframe, table
+                the cleaned dataframe to be ingested into the database
+
+    table_name:  str
+                Name of the tabel to be created in the database
+
+    col_to_str :    str   
+                the string that contains the CSV attributes and its corresponding SQL data type
+
+    Returns
+    ----------
+
+    """
+
+    buffer = StringIO
+
+    df.to_csv(buffer, index = False, heade = False)
+
+    buffer.seek(0)
+    
+    with conn.cursor() as cur:
+
+        # DDL TRANSACTION
+        cur.execute('DROP TABLE IF EXISTS %s ;' %(table_name))
+
+        create_script = "CREATE TABLE %s (%s);" %(table_name, col_to_str) 
+
+        
+        cur.execute(create_script)
+        
+        try:
+            cur.copy_from(buffer, table_name, sep=',')
+
+            conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print('Error: %s' %(error))
+
+            conn.rollback()
+    print(f'The table {table_name} has been successful be loaded with data')
+    print('The file has been successful copied using copy_from_stringio() function')
     conn.close()
 
     return 
 
 
 
-def main(file_name : str, date_columns:list = []):
+
+def main(file_name : str, date_columns:list = [], copy_from_disk = False, copy_from_stringio = False):
     """
     This runs the functions altogether and print necessary statement
 
@@ -201,12 +262,20 @@ def main(file_name : str, date_columns:list = []):
     table_name, df = clean_table_and_col_names(file_name, date_columns)
     col_to_str = change_dtype(df)
     conn = connect(parameters_dict)
-    copy_from_csv(
-        conn = conn,
-        df = df,
-        table_name = table_name,
-        col_to_str = col_to_str
-    )
+    if copy_from_disk == True:
+        copy_from_disk(
+            conn = conn,
+            df = df,
+            table_name = table_name,
+            col_to_str = col_to_str
+        )
+    else:
+        copy_from_stringio(
+            conn = conn,
+            df = df,
+            table_name = table_name,
+            col_to_str = col_to_str
+        )
 
 main('employees.csv', ['HIRE_DATE'])
 
