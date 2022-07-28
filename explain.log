@@ -1,0 +1,34 @@
+2022-07-28 14:32:36,914- [INFO] csv_to_database [csv_to_database.py.change_date_column:73]: date column: inserted_at has been successfully converted into datetime type
+
+2022-07-28 14:32:36,917- [INFO] csv_to_database [csv_to_database.py.change_date_column:73]: date column: updated_at has been successfully converted into datetime type
+
+2022-07-28 14:32:36,918- [INFO] csv_to_database [csv_to_database.py.clean_table_and_col_names:46]: deposits.csv columns has been processed for loading into SQL table
+2022-07-28 14:32:36,919- [INFO] csv_to_database [csv_to_database.py.change_dtype:102]: The pandas dtype format has been converted to SQL data type format
+
+2022-07-28 14:32:36,919- [INFO] csv_to_database [csv_to_database.py.connect:124]: Connecting to the PostgreSQL database............>>>>>>>>>
+
+2022-07-28 14:32:37,275- [INFO] csv_to_database [csv_to_database.py.connect:131]: Connection successful ..........
+2022-07-28 14:32:46,711- [INFO] csv_to_database [csv_to_database.py.copy_from_stringio:241]: The table deposits has been successful be loaded with data
+
+2022-07-28 14:32:46,712- [INFO] csv_to_database [csv_to_database.py.copy_from_stringio:242]: The file has been successful copied using copy_from_stringio() function
+
+2022-07-28 14:32:46,713- [INFO] __main__ [main.py.<module>:65]: deposits.csv has been copied successfuly copied into the PostgreSQL table
+
+2022-07-28 14:32:46,757- [INFO] csv_to_database [csv_to_database.py.change_date_column:73]: date column: inserted_at has been successfully converted into datetime type
+
+2022-07-28 14:32:46,761- [INFO] csv_to_database [csv_to_database.py.change_date_column:73]: date column: updated_at has been successfully converted into datetime type
+
+2022-07-28 14:32:46,762- [INFO] csv_to_database [csv_to_database.py.clean_table_and_col_names:46]: trades.csv columns has been processed for loading into SQL table
+2022-07-28 14:32:46,763- [INFO] csv_to_database [csv_to_database.py.change_dtype:102]: The pandas dtype format has been converted to SQL data type format
+
+2022-07-28 14:32:46,763- [INFO] csv_to_database [csv_to_database.py.connect:124]: Connecting to the PostgreSQL database............>>>>>>>>>
+
+2022-07-28 14:32:47,601- [INFO] csv_to_database [csv_to_database.py.connect:131]: Connection successful ..........
+2022-07-28 14:32:51,820- [INFO] csv_to_database [csv_to_database.py.copy_from_stringio:241]: The table trades has been successful be loaded with data
+
+2022-07-28 14:32:51,820- [INFO] csv_to_database [csv_to_database.py.copy_from_stringio:242]: The file has been successful copied using copy_from_stringio() function
+
+2022-07-28 14:32:51,821- [INFO] __main__ [main.py.<module>:65]: trades.csv has been copied successfuly copied into the PostgreSQL table
+
+2022-07-28 14:32:51,821- [INFO] __main__ [main.py.<module>:66]: The csv files has been successfully loaded into the PostgreSQL table
+

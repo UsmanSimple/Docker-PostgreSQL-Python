@@ -1,18 +1,16 @@
-from email import header
+# import libraries
 import pandas as pd
 import psycopg2
 import os
 import sys
 from io import StringIO
 
-parameters_dict= {
-'user':'admin',
-'password': 'password',
-'host' :'localhost',
-'dbname' : 'demo_db',
-'port' : 5432}
+#import logger modules
+import csv_logger
+logger = csv_logger.get_logger(__name__)
 
-def clean_table_and_col_names(file_name: str, date_columns : list = []):
+def clean_table_and_col_names(file_name: str, date_columns : list = [],
+                                 link = None, file_different_path = False):
     """
     This clean the filename and columns, and change the datetime column type from object to datetime type
 
@@ -32,8 +30,11 @@ def clean_table_and_col_names(file_name: str, date_columns : list = []):
     df :        dataframe, table
                 the cleaned dataframe to be ingested into the database;
     """
-    
-    df = pd.read_csv(file_name)
+    if file_different_path == False:
+        df = pd.read_csv(file_name)
+
+    else:
+        df = pd.read_csv(link + "\\"+ file_name)
 
     # change file_name into table_name with lower case and removal of spaces, dashes.
     table_name = file_name.lower().replace(' ', '_').replace('-', '_').replace('\\', '_').replace('/', '_').split('.')[0]
@@ -42,6 +43,7 @@ def clean_table_and_col_names(file_name: str, date_columns : list = []):
     df.columns = [x.lower().replace(' ', '_').replace('-', '_').replace('\\', '_').replace('/', '_') for x in df.columns]
 
     df = change_date_column(df, date_columns)
+    logger.info(f'{file_name} columns has been processed for loading into SQL table')
     
     return table_name, df
 
@@ -65,8 +67,11 @@ def change_date_column(df, date_columns : list = []):
 
     if len(date_columns) != 0:
         for i in date_columns:
-            column = i.lower().replace(' ', '_').replace('-', '_').replace('\\', '_').replace('/', '_')
-            df[column] = pd.to_datetime(df[column])
+            if i in df.columns:
+                column = i.lower().replace(' ', '_').replace('-', '_').replace('\\', '_').replace('/', '_')
+                df[column] = pd.to_datetime(df[column])
+                logger.info(f'date column: {i} has been successfully converted into datetime type\n')  
+        
     
     return df
 
@@ -90,10 +95,11 @@ def change_dtype(df):
     "object" : 'varchar',
      "float64": 'float',
      'int64': 'int',
-     'datetime64[ns]': 'timestamp'
+     'datetime64[ns, UTC]': 'timestamp'
         }
     
     col_to_str = ', '.join(f"{n} {d}" for (n,d) in zip(df.columns, df.dtypes.replace(replacement)) )
+    logger.info('The pandas dtype format has been converted to SQL data type format\n')  
 
 
     return col_to_str
@@ -115,14 +121,14 @@ def connect(parameter):
     
     conn = None
     try:
-        print('Connecting to the PostgreSQL database............>>>>>>>>>')
+        logger.info('Connecting to the PostgreSQL database............>>>>>>>>>\n')
         conn = psycopg2.connect(**parameter)
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-        print('Connection is unsucessful >>>>>>>>>>>>>>')
-        print('Program exit the interface ......>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        logger.exception(error+'\n')
+        logger.info('Connection is unsucessful >>>>>>>>>>>>>>\n')
+        logger.info('Program exit the interface ......>>>>>>>>>>>>>>>>>>>>>>>>>>>\n')
         sys.exit(1)
-    print('Connection successful ..........')
+    logger.info('Connection successful ..........')
 
     return conn
 
@@ -174,11 +180,11 @@ def copy_from_disk(conn, df, table_name, col_to_str):
 
             conn.commit()
         except (Exception, psycopg2.DatabaseError) as error:
-            print('Error: %s' %(error))
+            logger.error(error)
 
             conn.rollback()
-    print(f'The table {table_name} has been successful be loaded with data')
-    print('The file has been successful copied with copy_from_disk() function')
+    logger.info(f'The table {table_name} has been successful be loaded with data\n')
+    logger.info('The file has been successful copied with copy_from_disk() function\n')
     conn.close()
 
     return 
@@ -209,9 +215,9 @@ def copy_from_stringio(conn, df, table_name, col_to_str):
 
     """
 
-    buffer = StringIO
+    buffer = StringIO()
 
-    df.to_csv(buffer, index = False, heade = False)
+    df.to_csv(buffer, index = False, header = False)
 
     buffer.seek(0)
     
@@ -222,7 +228,6 @@ def copy_from_stringio(conn, df, table_name, col_to_str):
 
         create_script = "CREATE TABLE %s (%s);" %(table_name, col_to_str) 
 
-        
         cur.execute(create_script)
         
         try:
@@ -230,54 +235,12 @@ def copy_from_stringio(conn, df, table_name, col_to_str):
 
             conn.commit()
         except (Exception, psycopg2.DatabaseError) as error:
-            print('Error: %s' %(error))
+            logger.error(error)
 
             conn.rollback()
-    print(f'The table {table_name} has been successful be loaded with data')
-    print('The file has been successful copied using copy_from_stringio() function')
+    logger.info(f'The table {table_name} has been successful be loaded with data\n')
+    logger.info('The file has been successful copied using copy_from_stringio() function\n')
     conn.close()
 
     return 
-
-
-
-
-def main(file_name : str, date_columns:list = [], copy_from_disk = False, copy_from_stringio = False):
-    """
-    This runs the functions altogether and print necessary statement
-
-    Parameters
-    -----------
-    file_name:  str
-                Name of CSV file to be ingested 
-    
-    date_columns:   list, optional
-                    List of date columns to be convert
-
-    Returns
-    ----------
-
-    """
-
-    table_name, df = clean_table_and_col_names(file_name, date_columns)
-    col_to_str = change_dtype(df)
-    conn = connect(parameters_dict)
-    if copy_from_disk == True:
-        copy_from_disk(
-            conn = conn,
-            df = df,
-            table_name = table_name,
-            col_to_str = col_to_str
-        )
-    else:
-        copy_from_stringio(
-            conn = conn,
-            df = df,
-            table_name = table_name,
-            col_to_str = col_to_str
-        )
-
-main('employees.csv', ['HIRE_DATE'])
-
-
 

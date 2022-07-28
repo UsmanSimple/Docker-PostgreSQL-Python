@@ -1,1 +1,1 @@
-This is a demo for provision of database with Docker, connection of database with python database adapter, and Automating CSV files ingestion into database with python scripts and Dockerfile
+This is a repo that contains python scripts for provisioning database with Docker, connecting database with python database adapter Pyscopg2, automate CSV files ingestion into database with python scripts with docker yaml file, and finally solutions to a Data Analyst interview SQL test.
